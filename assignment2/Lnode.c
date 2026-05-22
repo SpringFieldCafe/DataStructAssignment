@@ -13,8 +13,6 @@ void split(List L, List *L1, List *L2, List *L3);
 void split(List L, List *L1, List *L2, List *L3) {
     LNode *p, *q;
     LNode *r1, *r2, *r3;
-
-    // 创建三个带头结点的单链表
     *L1 = (List)malloc(sizeof(LNode));
     *L2 = (List)malloc(sizeof(LNode));
     *L3 = (List)malloc(sizeof(LNode));
