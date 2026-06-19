@@ -100,23 +100,18 @@ void InsertEdge(LGraph Graph, Edge E)
  
 LGraph BuildDemoGraph()
 {
-    int Edges[16][2] = {
-        {0, 1}, {0, 2}, {0, 3}, {1, 2},
-        {1, 4}, {1, 5}, {2, 3}, {2, 5},
-        {2, 6}, {3, 6}, {3, 7}, {4, 5},
-        {4, 6}, {5, 6}, {5, 7}, {6, 7}
-    };
+    int VertexNum, EdgeNum;
     int i;
     Edge E;
     LGraph Graph;
-    Graph = CreateGraph(8);
-    Graph->Ne = 16;
+    scanf("%d %d", &VertexNum, &EdgeNum);
+    Graph = CreateGraph(VertexNum);
+    Graph->Ne = EdgeNum;
     E = (Edge)malloc(sizeof(struct ENode));
     E->Weight = 1;
     for (i = 0; i < Graph->Ne; i++)
     {
-        E->V1 = Edges[i][0];
-        E->V2 = Edges[i][1];
+        scanf("%d %d", &E->V1, &E->V2);
         InsertEdge(Graph, E);
     }
     free(E);
