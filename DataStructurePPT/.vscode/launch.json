@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/25747/Desktop/DataStruct",
-      "program": "c:/Users/25747/Desktop/DataStruct/build/Debug/outDebug",
+      "cwd": "c:/Users/25747/Desktop/DataStructurePPT",
+      "program": "c:/Users/25747/Desktop/DataStructurePPT/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
