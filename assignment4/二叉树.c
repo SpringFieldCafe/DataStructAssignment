@@ -1,262 +1,255 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
-#define MAXSIZE 10000
+#define MAXN 1000
+#define INF 0x3f3f3f3f
 
-typedef struct BiTNode {
-    char data;
-    struct BiTNode *lchild;
-    struct BiTNode *rchild;
-} BiTNode, *BiTree;
+typedef struct TNode *PtrToTNode;
+struct TNode {
+    char Data;
+    PtrToTNode Left;
+    PtrToTNode Right;
+};
+typedef PtrToTNode BinTree;
+typedef PtrToTNode Position;
 
-/* 顺序循环队列，用于层次遍历 */
-typedef struct {
-    BiTree data[MAXSIZE];
-    int front;
-    int rear;
-} SeqQueue;
+typedef struct SNode *PtrToSNode;
+struct SNode {
+    Position *Data;
+    int Top;
+    int Capacity;
+};
+typedef PtrToSNode Stack;
 
-/* 初始化队列 */
-void InitQueue(SeqQueue *Q) {
-    Q->front = 0;
-    Q->rear = 0;
+typedef struct QNode *PtrToQNode;
+struct QNode {
+    Position *Data;
+    int Front;
+    int Rear;
+    int Capacity;
+};
+typedef PtrToQNode Queue;
+
+Stack CreateStack(int MaxSize) {
+    Stack S;
+    S = (Stack)malloc(sizeof(struct SNode));
+    S->Data = (Position *)malloc(sizeof(Position) * MaxSize);
+    S->Top = -1;
+    S->Capacity = MaxSize;
+    return S;
 }
 
-/* 判断队列是否为空 */
-int QueueEmpty(SeqQueue *Q) {
-    return Q->front == Q->rear;
+int IsFullStack(Stack S) {
+    return S->Top == S->Capacity - 1;
 }
 
-/* 入队 */
-int EnQueue(SeqQueue *Q, BiTree x) {
-    if ((Q->rear + 1) % MAXSIZE == Q->front) {
-        return 0;
+int IsEmptyStack(Stack S) {
+    return S->Top == -1;
+}
+
+void Push(Stack S, Position X) {
+    if (!IsFullStack(S)) {
+        S->Data[++S->Top] = X;
     }
-
-    Q->data[Q->rear] = x;
-    Q->rear = (Q->rear + 1) % MAXSIZE;
-    return 1;
 }
 
-/* 出队 */
-BiTree DeQueue(SeqQueue *Q) {
-    BiTree x;
+void Pop(Stack S) {
+    if (!IsEmptyStack(S)) {
+        S->Top--;
+    }
+}
 
-    if (QueueEmpty(Q)) {
+Position GetTop(Stack S) {
+    if (IsEmptyStack(S)) {
         return NULL;
     }
-
-    x = Q->data[Q->front];
-    Q->front = (Q->front + 1) % MAXSIZE;
-    return x;
+    return S->Data[S->Top];
 }
 
-/* 跳过空格 */
-void SkipSpace(const char **p) {
-    while (**p != '\0' && isspace((unsigned char)**p)) {
-        (*p)++;
+Queue CreateQueue(int MaxSize) {
+    Queue Q;
+    Q = (Queue)malloc(sizeof(struct QNode));
+    Q->Data = (Position *)malloc(sizeof(Position) * MaxSize);
+    Q->Front = 0;
+    Q->Rear = 0;
+    Q->Capacity = MaxSize;
+    return Q;
+}
+
+int IsEmptyQueue(Queue Q) {
+    return Q->Front == Q->Rear;
+}
+
+int IsFullQueue(Queue Q) {
+    return (Q->Rear + 1) % Q->Capacity == Q->Front;
+}
+
+void AddQ(Queue Q, Position X) {
+    if (!IsFullQueue(Q)) {
+        Q->Rear = (Q->Rear + 1) % Q->Capacity;
+        Q->Data[Q->Rear] = X;
     }
 }
 
-/* 判断是否为结点字符 */
-int IsNodeChar(char ch) {
-    return isalnum((unsigned char)ch);
-}
-
-/*
-    根据括号表示法创建二叉树
-
-    例如：
-    A(B(D(,G),),C(E,F))
-*/
-BiTree CreateTree(const char **p) {
-    BiTree root;
-
-    SkipSpace(p);
-
-    if (**p == '\0' || **p == ')' || **p == ',') {
+Position DeleteQ(Queue Q) {
+    if (IsEmptyQueue(Q)) {
         return NULL;
     }
+    Q->Front = (Q->Front + 1) % Q->Capacity;
+    return Q->Data[Q->Front];
+}
 
-    if (!IsNodeChar(**p)) {
-        return NULL;
-    }
+BinTree CreateNode(char X) {
+    BinTree T;
+    T = (BinTree)malloc(sizeof(struct TNode));
+    T->Data = X;
+    T->Left = NULL;
+    T->Right = NULL;
+    return T;
+}
 
-    root = (BiTree)malloc(sizeof(BiTNode));
-    if (root == NULL) {
-        printf("内存分配失败！\n");
-        exit(1);
-    }
+BinTree CreateBinTree(char str[]) {
+    Stack S;
+    BinTree T, P;
+    int i, flag;
 
-    root->data = **p;
-    root->lchild = NULL;
-    root->rchild = NULL;
+    S = CreateStack(MAXN);
+    T = NULL;
+    P = NULL;
+    flag = 0;
 
-    (*p)++;
-
-    SkipSpace(p);
-
-    if (**p == '(') {
-        (*p)++;
-
-        SkipSpace(p);
-
-        if (**p != ',' && **p != ')') {
-            root->lchild = CreateTree(p);
-        }
-
-        SkipSpace(p);
-
-        if (**p == ',') {
-            (*p)++;
-
-            SkipSpace(p);
-
-            if (**p != ')') {
-                root->rchild = CreateTree(p);
+    for (i = 0; str[i] != '\0'; i++) {
+        if ((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= '0' && str[i] <= '9')) {
+            P = CreateNode(str[i]);
+            if (T == NULL) {
+                T = P;
+            } else {
+                if (flag == 1) {
+                    GetTop(S)->Left = P;
+                } else if (flag == 2) {
+                    GetTop(S)->Right = P;
+                }
             }
+        } else if (str[i] == '(') {
+            Push(S, P);
+            flag = 1;
+        } else if (str[i] == ',') {
+            flag = 2;
+        } else if (str[i] == ')') {
+            Pop(S);
         }
+    }
 
-        SkipSpace(p);
+    return T;
+}
 
-        if (**p == ')') {
-            (*p)++;
+void PreOrderTraversal(BinTree BT) {
+    if (BT) {
+        printf("%c ", BT->Data);
+        PreOrderTraversal(BT->Left);
+        PreOrderTraversal(BT->Right);
+    }
+}
+
+void InOrderTraversal(BinTree BT) {
+    if (BT) {
+        InOrderTraversal(BT->Left);
+        printf("%c ", BT->Data);
+        InOrderTraversal(BT->Right);
+    }
+}
+
+void PostOrderTraversal(BinTree BT) {
+    if (BT) {
+        PostOrderTraversal(BT->Left);
+        PostOrderTraversal(BT->Right);
+        printf("%c ", BT->Data);
+    }
+}
+
+void LevelOrderTraversal(BinTree BT) {
+    Queue Q;
+    Position T;
+
+    if (BT == NULL) {
+        return;
+    }
+
+    Q = CreateQueue(MAXN);
+    AddQ(Q, BT);
+
+    while (!IsEmptyQueue(Q)) {
+        T = DeleteQ(Q);
+        printf("%c ", T->Data);
+        if (T->Left) {
+            AddQ(Q, T->Left);
         }
-    }
-
-    return root;
-}
-
-/* 先序遍历：根 左 右 */
-void PreOrder(BiTree T) {
-    if (T == NULL) {
-        return;
-    }
-
-    printf("%c ", T->data);
-    PreOrder(T->lchild);
-    PreOrder(T->rchild);
-}
-
-/* 中序遍历：左 根 右 */
-void InOrder(BiTree T) {
-    if (T == NULL) {
-        return;
-    }
-
-    InOrder(T->lchild);
-    printf("%c ", T->data);
-    InOrder(T->rchild);
-}
-
-/* 后序遍历：左 右 根 */
-void PostOrder(BiTree T) {
-    if (T == NULL) {
-        return;
-    }
-
-    PostOrder(T->lchild);
-    PostOrder(T->rchild);
-    printf("%c ", T->data);
-}
-
-/* 层次遍历 */
-void LevelOrder(BiTree T) {
-    SeqQueue Q;
-    BiTree p;
-
-    if (T == NULL) {
-        return;
-    }
-
-    InitQueue(&Q);
-    EnQueue(&Q, T);
-
-    while (!QueueEmpty(&Q)) {
-        p = DeQueue(&Q);
-
-        printf("%c ", p->data);
-
-        if (p->lchild != NULL) {
-            EnQueue(&Q, p->lchild);
-        }
-
-        if (p->rchild != NULL) {
-            EnQueue(&Q, p->rchild);
+        if (T->Right) {
+            AddQ(Q, T->Right);
         }
     }
 }
 
-/* 统计叶子结点个数 */
-int CountLeaf(BiTree T) {
-    if (T == NULL) {
+int GetLeafCount(BinTree BT) {
+    if (BT == NULL) {
         return 0;
     }
-
-    if (T->lchild == NULL && T->rchild == NULL) {
+    if (BT->Left == NULL && BT->Right == NULL) {
         return 1;
     }
-
-    return CountLeaf(T->lchild) + CountLeaf(T->rchild);
+    return GetLeafCount(BT->Left) + GetLeafCount(BT->Right);
 }
 
-/* 求二叉树深度 */
-int TreeDepth(BiTree T) {
-    int leftDepth;
-    int rightDepth;
+int GetDepth(BinTree BT) {
+    int L, R;
 
-    if (T == NULL) {
+    if (BT == NULL) {
         return 0;
     }
 
-    leftDepth = TreeDepth(T->lchild);
-    rightDepth = TreeDepth(T->rchild);
+    L = GetDepth(BT->Left);
+    R = GetDepth(BT->Right);
 
-    return leftDepth > rightDepth ? leftDepth + 1 : rightDepth + 1;
+    return L > R ? L + 1 : R + 1;
 }
 
-/* 释放二叉树 */
-void DestroyTree(BiTree T) {
-    if (T == NULL) {
-        return;
+void FreeTree(BinTree BT) {
+    if (BT) {
+        FreeTree(BT->Left);
+        FreeTree(BT->Right);
+        free(BT);
     }
-
-    DestroyTree(T->lchild);
-    DestroyTree(T->rchild);
-    free(T);
 }
 
 int main() {
-    char str[MAXSIZE];
-    const char *p;
-    BiTree T;
+    char str[MAXN];
+    BinTree BT;
 
-    printf("请输入二叉树的括号表示法字符串：\n");
-    fgets(str, MAXSIZE, stdin);
+    scanf("%s", str);
 
-    str[strcspn(str, "\n")] = '\0';
+    BT = CreateBinTree(str);
 
-    p = str;
-    T = CreateTree(&p);
+    printf("PreOrder: ");
+    PreOrderTraversal(BT);
+    printf("\n");
 
-    printf("\n先序遍历结果：");
-    PreOrder(T);
+    printf("InOrder: ");
+    InOrderTraversal(BT);
+    printf("\n");
 
-    printf("\n中序遍历结果：");
-    InOrder(T);
+    printf("PostOrder: ");
+    PostOrderTraversal(BT);
+    printf("\n");
 
-    printf("\n后序遍历结果：");
-    PostOrder(T);
+    printf("LevelOrder: ");
+    LevelOrderTraversal(BT);
+    printf("\n");
 
-    printf("\n层次遍历结果：");
-    LevelOrder(T);
+    printf("LeafCount: %d\n", GetLeafCount(BT));
+    printf("Depth: %d\n", GetDepth(BT));
 
-    printf("\n叶子结点个数：%d", CountLeaf(T));
-    printf("\n二叉树深度：%d\n", TreeDepth(T));
-
-    DestroyTree(T);
+    FreeTree(BT);
 
     return 0;
 }
