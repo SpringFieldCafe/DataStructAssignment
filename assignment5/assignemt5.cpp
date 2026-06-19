@@ -1,98 +1,266 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-#define MaxVertex 10
-
-typedef int ver;
-typedef int edge;
-
-typedef struct AdjVNode *PtrToAdjVNode;
-typedef struct VNode *PtrToVNode;
-typedef struct GNode *PtrToGNode;
-
-typedef PtrToGNode LGraph;
-
-/* 边表结点 */
-struct AdjVNode {
-    char d;                  /* 邻接点数据 */
-    PtrToAdjVNode next;      /* 指向下一条边 */
+#include <stdbool.h>
+#define MaxVertexNum 30
+#define MaxSize 30
+#define INF 0x3f3f3f3f
+typedef int Vertex;
+typedef int WeightType;
+typedef char DataType;
+typedef struct AdjVNode *PtrAdjVNode;
+struct AdjVNode
+{
+    Vertex AdjV;
+    WeightType Weight;
+    PtrAdjVNode Next;
 };
-
-/* 顶点结点 */
-struct VNode {
-    PtrToAdjVNode FirstEdge; /* 指向第一条边 */
-    char d;                  /* 顶点数据 */
+ 
+struct VNode
+{
+    PtrAdjVNode FirstEdge;
+    DataType Data;
 };
-
-/* 邻接表 */
-typedef struct VNode AdjList[MaxVertex];
-
-/* 图结构 */
-struct GNode {
-    ver Nv;                  /* 顶点数 */
-    edge Ne;                 /* 边数 */
-    AdjList G;               /* 邻接表 */
+typedef struct VNode AdjList[MaxVertexNum];
+ 
+typedef struct GNode *PtrGNode;
+struct GNode
+{
+    int Nv;
+    int Ne;
+    AdjList G;
 };
-
-LGraph create(int v, int e) {
-    int i;
-
-    LGraph G = (LGraph)malloc(sizeof(struct GNode));
-
-    G->Nv = v;
-    G->Ne = e;
-
-    for (i = 0; i < G->Nv; i++) {
-        G->G[i].d = 'A' + i;
-        G->G[i].FirstEdge = NULL;
+typedef PtrGNode LGraph;
+ 
+typedef struct ENode *PtrENode;
+struct ENode
+{
+    Vertex V1, V2;
+    WeightType Weight;
+};
+typedef PtrENode Edge;
+ 
+typedef struct QNode *PtrQNode;
+struct QNode
+{
+    Vertex *Data;
+    int Front;
+    int Rear;
+    int Capacity;
+};
+typedef PtrQNode Queue;
+ 
+bool Visited[MaxVertexNum];
+ 
+LGraph CreateGraph(int VertexNum)
+{
+    LGraph Graph;
+    Vertex V;
+    Graph = (LGraph)malloc(sizeof(struct GNode));
+    Graph->Nv = VertexNum;
+    Graph->Ne = 0;
+    for (V = 0; V < Graph->Nv; V++)
+    {
+        Graph->G[V].FirstEdge = NULL;
+        Graph->G[V].Data = 'A' + V;
     }
-
-    return G;
+    return Graph;
 }
-
-void addEdge(LGraph g, char a, char b) {
-    PtrToAdjVNode v;
-    PtrToAdjVNode p;
-
-    v = (PtrToAdjVNode)malloc(sizeof(struct AdjVNode));
-    v->d = b;
-    v->next = NULL;
-
-    if (g->G[a - 'A'].FirstEdge == NULL) {
-        g->G[a - 'A'].FirstEdge = v;
-    } else {
-        p = g->G[a - 'A'].FirstEdge;
-        while (p->next != NULL) {
-            p = p->next;
-        }
-        p->next = v;
+ 
+void InsertOneEdge(LGraph Graph, Vertex V1, Vertex V2, WeightType Weight)
+{
+    PtrAdjVNode NewNode, P, Pre;
+    NewNode = (PtrAdjVNode)malloc(sizeof(struct AdjVNode));
+    NewNode->AdjV = V2;
+    NewNode->Weight = Weight;
+    NewNode->Next = NULL;
+    P = Graph->G[V1].FirstEdge;
+    Pre = NULL;
+    while (P && P->AdjV < V2)
+    {
+        Pre = P;
+        P = P->Next;
+    }
+    if (!Pre)
+    {
+        NewNode->Next = Graph->G[V1].FirstEdge;
+        Graph->G[V1].FirstEdge = NewNode;
+    }
+    else
+    {
+        NewNode->Next = Pre->Next;
+        Pre->Next = NewNode;
     }
 }
-
-void insert(LGraph g) {
-    char a, b;
-
-    scanf(" %c %c", &a, &b);
-
-    addEdge(g, a, b);
-    addEdge(g, b, a);
+ 
+void InsertEdge(LGraph Graph, Edge E)
+{
+    InsertOneEdge(Graph, E->V1, E->V2, E->Weight);
+    InsertOneEdge(Graph, E->V2, E->V1, E->Weight);
 }
-
-void show(LGraph g) {
+ 
+LGraph BuildDemoGraph()
+{
+    int Edges[16][2] = {
+        {0, 1}, {0, 2}, {0, 3}, {1, 2},
+        {1, 4}, {1, 5}, {2, 3}, {2, 5},
+        {2, 6}, {3, 6}, {3, 7}, {4, 5},
+        {4, 6}, {5, 6}, {5, 7}, {6, 7}
+    };
     int i;
-    PtrToAdjVNode p;
-
-    printf("邻接表为：\n");
-
-    for (i = 0; i < g->Nv; i++) {
-        printf("%c: ", g->G[i].d);
-
-        p = g->G[i].FirstEdge;
-        while (p != NULL) {
-            printf("%c ", p->d);
-            p = p->next;
-        }
-
+    Edge E;
+    LGraph Graph;
+    Graph = CreateGraph(8);
+    Graph->Ne = 16;
+    E = (Edge)malloc(sizeof(struct ENode));
+    E->Weight = 1;
+    for (i = 0; i < Graph->Ne; i++)
+    {
+        E->V1 = Edges[i][0];
+        E->V2 = Edges[i][1];
+        InsertEdge(Graph, E);
+    }
+    free(E);
+    return Graph;
+}
+ 
+void DisplayGraph(LGraph Graph)
+{
+    Vertex V;
+    PtrAdjVNode W;
+    printf("Adjacency list\n");
+    for (V = 0; V < Graph->Nv; V++)
+    {
+        printf("%c:", Graph->G[V].Data);
+        for (W = Graph->G[V].FirstEdge; W; W = W->Next)
+            printf(" %c", Graph->G[W->AdjV].Data);
         printf("\n");
     }
+}
+ 
+void InitVisited(LGraph Graph)
+{
+    Vertex V;
+    for (V = 0; V < Graph->Nv; V++)
+        Visited[V] = false;
+}
+ 
+void Visit(LGraph Graph, Vertex V)
+{
+    printf(" %c", Graph->G[V].Data);
+}
+ 
+void DFS(LGraph Graph, Vertex V)
+{
+    PtrAdjVNode W;
+    Visit(Graph, V);
+    Visited[V] = true;
+    for (W = Graph->G[V].FirstEdge; W; W = W->Next)
+        if (!Visited[W->AdjV])
+            DFS(Graph, W->AdjV);
+}
+ 
+void DFSGraph(LGraph Graph)
+{
+    Vertex V;
+    InitVisited(Graph);
+    printf("DFS:");
+    for (V = 0; V < Graph->Nv; V++)
+        if (!Visited[V])
+            DFS(Graph, V);
+    printf("\n");
+}
+ 
+Queue CreateQueue(int Capacity)
+{
+    Queue Q;
+    Q = (Queue)malloc(sizeof(struct QNode));
+    Q->Data = (Vertex *)malloc(sizeof(Vertex) * Capacity);
+    Q->Front = Q->Rear = 0;
+    Q->Capacity = Capacity;
+    return Q;
+}
+ 
+int IsEmpty(Queue Q)
+{
+    return Q->Front == Q->Rear;
+}
+ 
+void AddQ(Queue Q, Vertex X)
+{
+    if ((Q->Rear + 1) % Q->Capacity != Q->Front)
+    {
+        Q->Rear = (Q->Rear + 1) % Q->Capacity;
+        Q->Data[Q->Rear] = X;
+    }
+}
+ 
+Vertex DeleteQ(Queue Q)
+{
+    Q->Front = (Q->Front + 1) % Q->Capacity;
+    return Q->Data[Q->Front];
+}
+ 
+void BFS(LGraph Graph, Vertex S)
+{
+    Queue Q;
+    Vertex V;
+    PtrAdjVNode W;
+    Q = CreateQueue(MaxSize);
+    Visit(Graph, S);
+    Visited[S] = true;
+    AddQ(Q, S);
+    while (!IsEmpty(Q))
+    {
+        V = DeleteQ(Q);
+        for (W = Graph->G[V].FirstEdge; W; W = W->Next)
+        {
+            if (!Visited[W->AdjV])
+            {
+                Visit(Graph, W->AdjV);
+                Visited[W->AdjV] = true;
+                AddQ(Q, W->AdjV);
+            }
+        }
+    }
+    free(Q->Data);
+    free(Q);
+}
+ 
+void BFSGraph(LGraph Graph)
+{
+    Vertex V;
+    InitVisited(Graph);
+    printf("BFS:");
+    for (V = 0; V < Graph->Nv; V++)
+        if (!Visited[V])
+            BFS(Graph, V);
+    printf("\n");
+}
+ 
+void FreeGraph(LGraph Graph)
+{
+    Vertex V;
+    PtrAdjVNode P, T;
+    for (V = 0; V < Graph->Nv; V++)
+    {
+        P = Graph->G[V].FirstEdge;
+        while (P)
+        {
+            T = P->Next;
+            free(P);
+            P = T;
+        }
+    }
+    free(Graph);
+}
+ 
+int main()
+{
+    LGraph Graph;
+    Graph = BuildDemoGraph();
+    DisplayGraph(Graph);
+    DFSGraph(Graph);
+    BFSGraph(Graph);
+    FreeGraph(Graph);
+    return 0;
 }
