@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #define MAXN 1000
 #define INF 0x3f3f3f3f
-
 typedef char ElementType;
 typedef struct LNode *PtrToLNode;
 struct LNode

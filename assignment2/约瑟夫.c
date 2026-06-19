@@ -1,95 +1,75 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAXN 1000
+#define INF 0x3f3f3f3f
 
-typedef struct Node{
-    int data;
-    struct Node *next;
-}Node;
+typedef struct JNode *PtrToJNode;
+struct JNode
+{
+    int Data;
+    PtrToJNode Next;
+};
+typedef PtrToJNode JList;
 
-Node* createCircleList(int n) {
-    Node *head = NULL;
-    Node *tail = NULL;
-
-    for (int i = 1; i <= n; i++) {
-        Node *newNode = (Node*)malloc(sizeof(Node));
-        if (newNode == NULL) {
-            printf("内存分配失败！\n");
-            exit(1);
+JList CreateJosephus(int N)
+{
+    JList Head, Tail, P;
+    int i;
+    Head = NULL;
+    Tail = NULL;
+    for (i = 1; i <= N; i++)
+    {
+        P = (JList)malloc(sizeof(struct JNode));
+        P->Data = i;
+        P->Next = NULL;
+        if (!Head)
+        {
+            Head = P;
+            Tail = P;
         }
-
-        newNode->data = i;
-        newNode->next = NULL;
-
-        if (head == NULL) {
-            head = newNode;
-            tail = newNode;
-        } else {
-            tail->next = newNode;
-            tail = newNode;
+        else
+        {
+            Tail->Next = P;
+            Tail = P;
         }
     }
-    tail->next = head;
-
-    return head;
+    if (Tail)
+        Tail->Next = Head;
+    return Tail;
 }
 
-void josephus(int n, int m, int k) {
-    Node *head = createCircleList(n);
-
-    Node *p = head;
-    Node *pre = head;
-
-    while (pre->next != head) {
-        pre = pre->next;
+void Josephus(int N, int M, int Start)
+{
+    JList Pre, Del;
+    int Cnt, i;
+    if (N <= 0 || M <= 0 || Start < 1 || Start > N)
+    {
+        printf("Invalid input\n");
+        return;
     }
-    for (int i = 1; i < k; i++) {
-        pre = p;
-        p = p->next;
+    Pre = CreateJosephus(N);
+    while (Pre->Next->Data != Start)
+        Pre = Pre->Next;
+    Cnt = N;
+    printf("Josephus order:");
+    while (Cnt)
+    {
+        for (i = 1; i < M; i++)
+            Pre = Pre->Next;
+        Del = Pre->Next;
+        printf(" %d", Del->Data);
+        Pre->Next = Del->Next;
+        free(Del);
+        Cnt--;
     }
-
-    printf("出列顺序为：");
-
-    int count = n;
-
-    while (count > 0) {
-        for (int i = 1; i < m; i++) {
-            pre = p;
-            p = p->next;
-        }
-        printf("%d", p->data);
-
-        if (count > 1) {
-            printf(" ");
-        }
-        Node *temp = p;
-        pre->next = p->next;
-        p = p->next;
-        free(temp);
-
-        count--;
-    }
-
     printf("\n");
 }
 
-int main(){
-int n, m, k;
-
-    printf("请输入总人数 n：");
-    scanf("%d", &n);
-
-    printf("请输入报数值 m：");
-    scanf("%d", &m);
-
-    printf("请输入开始位置 k：");
-    scanf("%d", &k);
-
-    if (n <= 0 || m <= 0 || k <= 0 || k > n) {
-        printf("输入数据不合法！\n");
-        return 1;
-    }
-
-    josephus(n, m, k);
-
+int main()
+{
+    int N, M, Start;
+    scanf("%d%d%d", &N, &M, &Start);
+    Josephus(N, M, Start);
     return 0;
 }
